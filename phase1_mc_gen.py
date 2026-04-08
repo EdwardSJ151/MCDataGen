@@ -581,7 +581,6 @@ async def main(
                     try:
                         async with write_lock:
                             if seq_id >= num_rows:
-                                conv_queue.task_done()
                                 return
 
                         cfg = STYLE_CONFIGS[work["style"]]
@@ -639,35 +638,32 @@ async def main(
                             if quality_passes(qualidade):
                                 break
 
-                        if best_text is None:
-                            conv_queue.task_done()
-                            continue
+                        if best_text is not None:
+                            conversation = [
+                                {"role": "user",      "content": work["user_msg"]},
+                                {"role": "assistant", "content": best_text},
+                            ]
 
-                        conversation = [
-                            {"role": "user",      "content": work["user_msg"]},
-                            {"role": "assistant", "content": best_text},
-                        ]
-
-                        async with write_lock:
-                            if seq_id < num_rows:
-                                record = {
-                                    "id":                   seq_id,
-                                    "seq_id":               seq_id,
-                                    "conversation":         conversation,
-                                    "response_style":       work["style"],
-                                    "context_id":           work["ctx_id"],
-                                    "gold_answer":          work["answer_letter"],
-                                    "target_letter":        work["target_letter"],
-                                    "level":                work["level"],
-                                    "subject":              work["subject"],
-                                    "persona":              work["persona_text"],
-                                    "qualidade":            best_qualidade,
-                                    "explicacao_qualidade": best_explicacao,
-                                }
-                                fout.write(json.dumps(record, ensure_ascii=False) + "\n")
-                                fout.flush()
-                                done_ctx.add(work["ctx_id"])
-                                seq_id += 1
+                            async with write_lock:
+                                if seq_id < num_rows:
+                                    record = {
+                                        "id":                   seq_id,
+                                        "seq_id":               seq_id,
+                                        "conversation":         conversation,
+                                        "response_style":       work["style"],
+                                        "context_id":           work["ctx_id"],
+                                        "gold_answer":          work["answer_letter"],
+                                        "target_letter":        work["target_letter"],
+                                        "level":                work["level"],
+                                        "subject":              work["subject"],
+                                        "persona":              work["persona_text"],
+                                        "qualidade":            best_qualidade,
+                                        "explicacao_qualidade": best_explicacao,
+                                    }
+                                    fout.write(json.dumps(record, ensure_ascii=False) + "\n")
+                                    fout.flush()
+                                    done_ctx.add(work["ctx_id"])
+                                    seq_id += 1
                     except Exception:
                         import traceback
                         traceback.print_exc()

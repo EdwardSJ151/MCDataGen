@@ -9,7 +9,7 @@ load_dotenv(_repo_root / ".env")
 load_dotenv(_cfg_dir / ".env", override=True)
 
 # vLLM SERVER
-VLLM_BASE_URL = os.environ.get("VLLM_BASE_URL", "http://localhost:8020/v1")
+VLLM_BASE_URL = os.environ.get("VLLM_BASE_URL", "http://10.100.0.111:8020/v1")
 VLLM_API_KEY = os.environ.get("VLLM_API_KEY", "no-key-needed")
 
 # SOURCE DATASET
